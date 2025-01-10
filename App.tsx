@@ -1,118 +1,139 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import {useHeaderHeight} from '@react-navigation/elements';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React, {useLayoutEffect, useState} from 'react';
+import {Button, FlatList, Text, useWindowDimensions, View} from 'react-native';
+import {TabView} from 'react-native-tab-view';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+function HomeScreen({navigation}) {
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <Button
+        title="Details screen"
+        onPress={() => navigation.navigate('Details')}
+      />
+      <Button
+        title="Screen with search bar"
+        onPress={() => navigation.navigate('SearchBar')}
+      />
+      <Button
+        title="Screen with search bar without tabs"
+        onPress={() => navigation.navigate('SearchBarWithoutTabs')}
+      />
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+function DetailsScreen({navigation}) {
+  const height = useHeaderHeight();
+  console.log('details height', height);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <Button
+        title="Go to screen with search bar"
+        onPress={() => navigation.navigate('SearchBar')}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+const renderScene = ({route}) => {
+  switch (route.key) {
+    case '1':
+      return <List numberOfElements={10} />;
+    case '2':
+      return <List numberOfElements={5} />;
+    default:
+      return null;
+  }
+};
+
+const List = ({numberOfElements}) => {
+  const data = Array.from(Array(numberOfElements).keys());
+
+  const height = useHeaderHeight();
+  console.log('height', height);
+
+  return (
+    <FlatList
+      contentInsetAdjustmentBehavior="automatic"
+      data={data}
+      renderItem={({item}) => {
+        return (
+          <View style={{backgroundColor: 'blue'}}>
+            <Text style={{fontSize: 25}}>{item}</Text>
+          </View>
+        );
+      }}
+    />
+  );
+};
+
+const routes = [
+  {key: '1', title: 'Screen 1'},
+  {key: '2', title: 'Screen 2'},
+];
+
+function SearchBarScreen({navigation}) {
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerSearchBarOptions: {
+        autoCapitalize: 'none',
+        placement: 'stacked',
+        hideWhenScrolling: false,
+        shouldShowHintSearchIcon: false,
+        hideNavigationBar: true,
+      },
+    });
+  }, [navigation]);
+
+  const layout = useWindowDimensions();
+
+  const [index, setIndex] = useState(0);
+
+  return (
+    <TabView
+      navigationState={{index, routes}}
+      renderScene={renderScene}
+      onIndexChange={setIndex}
+      initialLayout={{width: layout.width}}
+    />
+  );
+}
+
+function SearchBarScreenWithoutTabs({navigation}) {
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerSearchBarOptions: {
+        autoCapitalize: 'none',
+        placement: 'stacked',
+        hideWhenScrolling: false,
+        shouldShowHintSearchIcon: false,
+        hideNavigationBar: true,
+      },
+    });
+  }, [navigation]);
+
+  return <List numberOfElements={15} />;
+}
+
+const Stack = createNativeStackNavigator();
+
+function App(): React.JSX.Element {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="SearchBar" component={SearchBarScreen} />
+        <Stack.Screen
+          name="SearchBarWithoutTabs"
+          component={SearchBarScreenWithoutTabs}
+        />
+        <Stack.Screen name="Details" component={DetailsScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
 
 export default App;
